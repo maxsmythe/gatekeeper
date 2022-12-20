@@ -15,12 +15,13 @@ limitations under the License.
 */
 
 // Modified from the original source (available at
-// https://github.com/kubernetes-sigs/controller-runtime/tree/v0.9.2/pkg/cache)
+// https://github.com/kubernetes-sigs/controller-runtime/tree/v0.13.1/pkg/cache)
 
 package informertest
 
 import (
 	"context"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -54,7 +55,7 @@ func (c *FakeInformers) GetInformerForKind(ctx context.Context, gvk schema.Group
 }
 
 // FakeInformerForKind implements Informers.
-func (c *FakeInformers) FakeInformerForKind(ctx context.Context, gvk schema.GroupVersionKind) (*controllertest.FakeInformer, error) {
+func (c *FakeInformers) FakeInformerForKind(ctx context.Context, gvk schema.GroupVersionKind) (*fakeInformerWrapper, error) {
 	if c.Scheme == nil {
 		c.Scheme = scheme.Scheme
 	}
@@ -66,7 +67,7 @@ func (c *FakeInformers) FakeInformerForKind(ctx context.Context, gvk schema.Grou
 	if err != nil {
 		return nil, err
 	}
-	return i.(*controllertest.FakeInformer), nil
+	return i.(*fakeInformerWrapper), nil
 }
 
 // GetInformer implements Informers.
@@ -91,7 +92,7 @@ func (c *FakeInformers) WaitForCacheSync(ctx context.Context) bool {
 }
 
 // FakeInformerFor implements Informers.
-func (c *FakeInformers) FakeInformerFor(obj runtime.Object) (*controllertest.FakeInformer, error) {
+func (c *FakeInformers) FakeInformerFor(obj runtime.Object) (*fakeInformerWrapper, error) {
 	if c.Scheme == nil {
 		c.Scheme = scheme.Scheme
 	}
@@ -104,7 +105,7 @@ func (c *FakeInformers) FakeInformerFor(obj runtime.Object) (*controllertest.Fak
 	if err != nil {
 		return nil, err
 	}
-	return i.(*controllertest.FakeInformer), nil
+	return i.(*fakeInformerWrapper), nil
 }
 
 func (c *FakeInformers) informerFor(gvk schema.GroupVersionKind, _ runtime.Object) (toolscache.SharedIndexInformer, error) {
@@ -119,7 +120,7 @@ func (c *FakeInformers) informerFor(gvk schema.GroupVersionKind, _ runtime.Objec
 		return informer, nil
 	}
 
-	c.InformersByGVK[gvk] = &controllertest.FakeInformer{}
+	c.InformersByGVK[gvk] = &fakeInformerWrapper{FakeInformer: controllertest.FakeInformer{}}
 	return c.InformersByGVK[gvk], nil
 }
 
@@ -134,11 +135,32 @@ func (c *FakeInformers) IndexField(ctx context.Context, obj client.Object, field
 }
 
 // Get implements Cache.
-func (c *FakeInformers) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
+func (c *FakeInformers) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	return nil
 }
 
 // List implements Cache.
 func (c *FakeInformers) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	return nil
+}
+
+type fakeInformerWrapper struct {
+	controllertest.FakeInformer
+}
+
+// The following are shims because the mocks in controller-runtime for 0.13.1 do not have the necessary interface functions
+func (fw *fakeInformerWrapper) AddEventHandler(eh toolscache.ResourceEventHandler) (toolscache.ResourceEventHandlerRegistration, error) {
+	fw.FakeInformer.AddEventHandler(eh)
+	return nil, nil
+}
+
+func (fw *fakeInformerWrapper) AddEventHandlerWithResyncPeriod(eh toolscache.ResourceEventHandler, t time.Duration) (toolscache.ResourceEventHandlerRegistration, error) {
+	fw.FakeInformer.AddEventHandlerWithResyncPeriod(eh, t)
+	return nil, nil
+}
+
+func (fw *fakeInformerWrapper) IsStopped() bool { return false }
+
+func (fw *fakeInformerWrapper) RemoveEventHandler(r toolscache.ResourceEventHandlerRegistration) error {
 	return nil
 }

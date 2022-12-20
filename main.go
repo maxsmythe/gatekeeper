@@ -33,6 +33,7 @@ import (
 	"github.com/go-logr/zapr"
 	"github.com/open-policy-agent/cert-controller/pkg/rotator"
 	constraintclient "github.com/open-policy-agent/frameworks/constraint/pkg/client"
+	"github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers/k8scel"
 	"github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers/local"
 	frameworksexternaldata "github.com/open-policy-agent/frameworks/constraint/pkg/externaldata"
 	api "github.com/open-policy-agent/gatekeeper/apis"
@@ -305,12 +306,13 @@ func setupControllers(mgr ctrl.Manager, sw *watch.ControllerSwitch, tracker *rea
 		// register the client cert watcher to the mutation system
 		mutationOpts.ClientCertWatcher = certWatcher
 	}
-	// initialize OPA
-	driver, err := local.New(args...)
-	if err != nil {
-		setupLog.Error(err, "unable to set up Driver")
-		os.Exit(1)
-	}
+	// // initialize OPA
+	// driver, err := local.New(args...)
+	// if err != nil {
+	// 	setupLog.Error(err, "unable to set up Driver")
+	// 	os.Exit(1)
+	// }
+	driver := k8scel.New()
 
 	client, err := constraintclient.NewClient(constraintclient.Targets(&target.K8sValidationTarget{}), constraintclient.Driver(driver))
 	if err != nil {

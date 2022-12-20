@@ -56,11 +56,6 @@ func (f *FakeInformer) HasSynced() bool {
 	return f.Synced
 }
 
-// AddEventHandler implements the Informer interface.  Adds an EventHandler to the fake Informers.
-func (f *FakeInformer) AddEventHandler(handler cache.ResourceEventHandler) {
-	f.handlers = append(f.handlers, handler)
-}
-
 // Run implements the Informer interface.  Increments f.RunCount.
 func (f *FakeInformer) Run(<-chan struct{}) {
 	f.RunCount++
@@ -87,11 +82,6 @@ func (f *FakeInformer) Delete(obj metav1.Object) {
 	}
 }
 
-// AddEventHandlerWithResyncPeriod does nothing.  TODO(community): Implement this.
-func (f *FakeInformer) AddEventHandlerWithResyncPeriod(handler cache.ResourceEventHandler, resyncPeriod time.Duration) {
-
-}
-
 // GetStore does nothing.  TODO(community): Implement this.
 func (f *FakeInformer) GetStore() cache.Store {
 	return nil
@@ -114,5 +104,21 @@ func (f *FakeInformer) SetWatchErrorHandler(cache.WatchErrorHandler) error {
 
 // SetTransform does nothing.  TODO(community): Implement this.
 func (f *FakeInformer) SetTransform(t cache.TransformFunc) error {
+	return nil
+}
+
+// The following are shims because the mocks in controller-runtime for 0.13.1 do not have the necessary interface functions
+func (f *FakeInformer) AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
+	f.handlers = append(f.handlers, handler)
+	return nil, nil
+}
+
+func (f *FakeInformer) AddEventHandlerWithResyncPeriod(eh cache.ResourceEventHandler, t time.Duration) (cache.ResourceEventHandlerRegistration, error) {
+	return nil, nil
+}
+
+func (f *FakeInformer) IsStopped() bool { return false }
+
+func (f *FakeInformer) RemoveEventHandler(r cache.ResourceEventHandlerRegistration) error {
 	return nil
 }

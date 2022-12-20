@@ -35,6 +35,9 @@ import (
 
 var log = logf.RuntimeLog.WithName("object-cache")
 
+// NewCacheFunc - Function for creating a new cache from the options and a rest config.
+type NewCacheFunc func(config *rest.Config, opts Options) (Cache, error)
+
 // Cache knows how to load Kubernetes objects, fetch informers to request
 // to receive events for Kubernetes objects (at a low-level),
 // and add indices to fields on the objects stored in the cache.
@@ -74,11 +77,11 @@ type Informer interface {
 	// AddEventHandler adds an event handler to the shared informer using the shared informer's resync
 	// period.  Events to a single handler are delivered sequentially, but there is no coordination
 	// between different handlers.
-	AddEventHandler(handler toolscache.ResourceEventHandler)
+	AddEventHandler(handler toolscache.ResourceEventHandler) (toolscache.ResourceEventHandlerRegistration, error)
 	// AddEventHandlerWithResyncPeriod adds an event handler to the shared informer using the
 	// specified resync period.  Events to a single handler are delivered sequentially, but there is
 	// no coordination between different handlers.
-	AddEventHandlerWithResyncPeriod(handler toolscache.ResourceEventHandler, resyncPeriod time.Duration)
+	AddEventHandlerWithResyncPeriod(handler toolscache.ResourceEventHandler, resyncPeriod time.Duration) (toolscache.ResourceEventHandlerRegistration, error)
 	// AddIndexers adds more indexers to this store.  If you call this after you already have data
 	// in the store, the results are undefined.
 	AddIndexers(indexers toolscache.Indexers) error
@@ -170,10 +173,10 @@ func New(config *rest.Config, opts Options) (Cache, error) {
 // BuilderWithOptions returns a Cache constructor that will build the a cache
 // honoring the options argument, this is useful to specify options like
 // SelectorsByObject
-// WARNING: if SelectorsByObject is specified. filtered out resources are not
-//          returned.
-// WARNING: if UnsafeDisableDeepCopy is enabled, you must DeepCopy any object
-//          returned from cache get/list before mutating it.
+// WARNING: If SelectorsByObject is specified, filtered out resources are not
+// returned.
+// WARNING: If UnsafeDisableDeepCopy is enabled, you must DeepCopy any object
+// returned from cache get/list before mutating it.
 func BuilderWithOptions(options Options) NewCacheFunc {
 	return func(config *rest.Config, opts Options) (Cache, error) {
 		if options.Scheme == nil {

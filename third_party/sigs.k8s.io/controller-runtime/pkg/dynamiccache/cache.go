@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 // Modified from the original source (available at
-// https://github.com/kubernetes-sigs/controller-runtime/tree/v0.9.2/pkg/cache)
+// https://github.com/kubernetes-sigs/controller-runtime/tree/v0.13.1/pkg/cache)
 
 package dynamiccache
 
@@ -25,9 +25,12 @@ import (
 
 	"github.com/open-policy-agent/gatekeeper/third_party/sigs.k8s.io/controller-runtime/pkg/dynamiccache/internal"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	toolscache "k8s.io/client-go/tools/cache"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -42,35 +45,49 @@ func New(config *rest.Config, opts cache.Options) (cache.Cache, error) {
 	if err != nil {
 		return nil, err
 	}
-	selectorsByGVK, err := convertToSelectorsByGVK(opts.SelectorsByObject, opts.Scheme)
+	selectorsByGVK, err := convertToSelectorsByGVK(opts.SelectorsByObject, opts.DefaultSelector, opts.Scheme)
 	if err != nil {
 		return nil, err
 	}
-	im := internal.NewInformersMap(config, opts.Scheme, opts.Mapper, *opts.Resync, opts.Namespace, selectorsByGVK)
+	disableDeepCopyByGVK, err := convertToDisableDeepCopyByGVK(opts.UnsafeDisableDeepCopyByObject, opts.Scheme)
+	if err != nil {
+		return nil, err
+	}
+	transformByGVK, err := convertToTransformByKindAndGVK(opts.TransformByObject, opts.DefaultTransform, opts.Scheme)
+	if err != nil {
+		return nil, err
+	}
+
+	im := internal.NewInformersMap(config, opts.Scheme, opts.Mapper, *opts.Resync, opts.Namespace, selectorsByGVK, disableDeepCopyByGVK, transformByGVK)
 	return &dynamicInformerCache{InformersMap: im}, nil
 }
 
 // BuilderWithOptions returns a Cache constructor that will build the a cache
 // honoring the options argument, this is useful to specify options like
 // SelectorsByObject
-// WARNING: if SelectorsByObject is specified. filtered out resources are not
-//          returned.
+// WARNING: If SelectorsByObject is specified, filtered out resources are not
+// returned.
+// WARNING: If UnsafeDisableDeepCopy is enabled, you must DeepCopy any object
+// returned from cache get/list before mutating it.
 func BuilderWithOptions(options cache.Options) cache.NewCacheFunc {
 	return func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
-		if opts.Scheme == nil {
-			opts.Scheme = options.Scheme
+		if options.Scheme == nil {
+			options.Scheme = opts.Scheme
 		}
-		if opts.Mapper == nil {
-			opts.Mapper = options.Mapper
+		if options.Mapper == nil {
+			options.Mapper = opts.Mapper
+		}
+		if options.Resync == nil {
+			options.Resync = opts.Resync
+		}
+		if options.Namespace == "" {
+			options.Namespace = opts.Namespace
 		}
 		if opts.Resync == nil {
 			opts.Resync = options.Resync
 		}
-		if opts.Namespace == "" {
-			opts.Namespace = options.Namespace
-		}
-		opts.SelectorsByObject = options.SelectorsByObject
-		return New(config, opts)
+
+		return New(config, options)
 	}
 }
 
@@ -97,17 +114,47 @@ func defaultOpts(config *rest.Config, opts cache.Options) (cache.Options, error)
 	return opts, nil
 }
 
-func convertToSelectorsByGVK(selectorsByObject cache.SelectorsByObject, scheme *runtime.Scheme) (internal.SelectorsByGVK, error) {
+func convertToSelectorsByGVK(selectorsByObject cache.SelectorsByObject, defaultSelector cache.ObjectSelector, scheme *runtime.Scheme) (internal.SelectorsByGVK, error) {
 	selectorsByGVK := internal.SelectorsByGVK{}
 	for object, selector := range selectorsByObject {
 		gvk, err := apiutil.GVKForObject(object, scheme)
 		if err != nil {
 			return nil, err
 		}
-		selectorsByGVK[gvk] = internal.Selector{
-			Label: selector.Label,
-			Field: selector.Field,
+		selectorsByGVK[gvk] = internal.Selector(selector)
+	}
+	selectorsByGVK[schema.GroupVersionKind{}] = internal.Selector(defaultSelector)
+	return selectorsByGVK, nil
+}
+
+func convertToDisableDeepCopyByGVK(disableDeepCopyByObject cache.DisableDeepCopyByObject, scheme *runtime.Scheme) (internal.DisableDeepCopyByGVK, error) {
+	disableDeepCopyByGVK := internal.DisableDeepCopyByGVK{}
+	for obj, disable := range disableDeepCopyByObject {
+		switch obj.(type) {
+		case cache.ObjectAll, *cache.ObjectAll:
+			disableDeepCopyByGVK[internal.GroupVersionKindAll] = disable
+		default:
+			gvk, err := apiutil.GVKForObject(obj, scheme)
+			if err != nil {
+				return nil, err
+			}
+			disableDeepCopyByGVK[gvk] = disable
 		}
 	}
-	return selectorsByGVK, nil
+	return disableDeepCopyByGVK, nil
+}
+
+// TransformByObject associate a client.Object's GVK to a transformer function
+// to be applied when storing the object into the cache.
+type TransformByObject map[client.Object]toolscache.TransformFunc
+
+func convertToTransformByKindAndGVK(t cache.TransformByObject, defaultTransform toolscache.TransformFunc, scheme *runtime.Scheme) (internal.TransformFuncByObject, error) {
+	result := internal.NewTransformFuncByObject()
+	for obj, transformation := range t {
+		if err := result.Set(obj, scheme, transformation); err != nil {
+			return nil, err
+		}
+	}
+	result.SetDefault(defaultTransform)
+	return result, nil
 }
