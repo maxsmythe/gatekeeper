@@ -16,6 +16,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/open-policy-agent/frameworks/constraint/pkg/core/templates"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -57,6 +58,21 @@ type Target struct {
 	Target string   `json:"target,omitempty"`
 	Rego   string   `json:"rego,omitempty"`
 	Libs   []string `json:"libs,omitempty"`
+	// The source code options for the constraint template. "Rego" can only
+	// be specified in one place (either here or in the "rego" field)
+	Code []Code `json:"code,omitempty"`
+}
+
+type Code struct {
+	// +kubebuilder:validation:Required
+	// The engine used to evaluate the code. Example: "Rego". Required.
+	Engine string `json:"engine,omitempty"`
+
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// The source code for the template. Required.
+	Source *templates.Anything `json:"source,omitempty"`
 }
 
 // CreateCRDError represents a single error caught during parsing, compiling, etc.

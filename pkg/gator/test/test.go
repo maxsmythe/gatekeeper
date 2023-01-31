@@ -7,7 +7,8 @@ import (
 	"github.com/open-policy-agent/frameworks/constraint/pkg/apis"
 	templatesv1 "github.com/open-policy-agent/frameworks/constraint/pkg/apis/templates/v1"
 	constraintclient "github.com/open-policy-agent/frameworks/constraint/pkg/client"
-	"github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers/local"
+	"github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers/simple"
+	"github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers/rego"
 	"github.com/open-policy-agent/gatekeeper/pkg/expansion"
 	"github.com/open-policy-agent/gatekeeper/pkg/gator/expand"
 	"github.com/open-policy-agent/gatekeeper/pkg/gator/reader"
@@ -30,12 +31,12 @@ func init() {
 func Test(objs []*unstructured.Unstructured, includeTrace bool) (*GatorResponses, error) {
 	// create the client
 
-	driver, err := local.New(local.Tracing(includeTrace))
+	opaDriver, err := local.New(local.Tracing(includeTrace))
 	if err != nil {
 		return nil, err
 	}
 
-	client, err := constraintclient.NewClient(constraintclient.Targets(&target.K8sValidationTarget{}), constraintclient.Driver(driver))
+	client, err := constraintclient.NewClient(constraintclient.Targets(&target.K8sValidationTarget{}), constraintclient.Driver(simple.New()), constraintclient.Driver(opaDriver))
 	if err != nil {
 		return nil, fmt.Errorf("creating OPA client: %w", err)
 	}

@@ -388,9 +388,8 @@ github.com/onsi/gomega/types
 # github.com/open-policy-agent/cert-controller v0.4.0
 ## explicit; go 1.17
 github.com/open-policy-agent/cert-controller/pkg/rotator
-# github.com/open-policy-agent/frameworks/constraint v0.0.0-20221214024800-b745745c4118
+# github.com/open-policy-agent/frameworks/constraint v0.0.0-20221214024800-b745745c4118 => ../frameworks/constraint
 ## explicit; go 1.18
-github.com/open-policy-agent/frameworks/constraint/deploy
 github.com/open-policy-agent/frameworks/constraint/pkg/apis
 github.com/open-policy-agent/frameworks/constraint/pkg/apis/constraints
 github.com/open-policy-agent/frameworks/constraint/pkg/apis/externaldata/unversioned
@@ -402,7 +401,8 @@ github.com/open-policy-agent/frameworks/constraint/pkg/apis/templates/v1beta1
 github.com/open-policy-agent/frameworks/constraint/pkg/client
 github.com/open-policy-agent/frameworks/constraint/pkg/client/crds
 github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers
-github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers/local
+github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers/rego
+github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers/simple
 github.com/open-policy-agent/frameworks/constraint/pkg/client/errors
 github.com/open-policy-agent/frameworks/constraint/pkg/core/constraints
 github.com/open-policy-agent/frameworks/constraint/pkg/core/templates
@@ -997,6 +997,7 @@ k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/reflect
 # k8s.io/apiserver v0.26.1
 ## explicit; go 1.19
+k8s.io/apiserver/pkg/admission
 k8s.io/apiserver/pkg/apis/apiserver
 k8s.io/apiserver/pkg/apis/apiserver/install
 k8s.io/apiserver/pkg/apis/apiserver/v1
@@ -1284,3 +1285,4 @@ sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.3.0
 ## explicit; go 1.12
 sigs.k8s.io/yaml
+# github.com/open-policy-agent/frameworks/constraint => ../frameworks/constraint

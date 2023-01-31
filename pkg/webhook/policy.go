@@ -29,8 +29,6 @@ import (
 	externaldataUnversioned "github.com/open-policy-agent/frameworks/constraint/pkg/apis/externaldata/unversioned"
 	constraintclient "github.com/open-policy-agent/frameworks/constraint/pkg/client"
 	"github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers"
-	"github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers/local"
-	"github.com/open-policy-agent/frameworks/constraint/pkg/core/templates"
 	"github.com/open-policy-agent/frameworks/constraint/pkg/externaldata"
 	rtypes "github.com/open-policy-agent/frameworks/constraint/pkg/types"
 	"github.com/open-policy-agent/gatekeeper/apis"
@@ -355,35 +353,8 @@ func (h *validationHandler) validateGatekeeperResources(ctx context.Context, req
 // The returned boolean is only true if error is non-nil and is a result of user
 // error.
 func (h *validationHandler) validateTemplate(ctx context.Context, req *admission.Request) (bool, error) {
-	templ, _, err := deserializer.Decode(req.AdmissionRequest.Object.Raw, nil, nil)
-	if err != nil {
-		return false, err
-	}
-
-	unversioned := &templates.ConstraintTemplate{}
-	err = runtimeScheme.Convert(templ, unversioned, nil)
-	if err != nil {
-		return false, err
-	}
-
-	// Ensure that it is possible to generate a CRD for this ConstraintTemplate.
-	_, err = h.opa.CreateCRD(ctx, unversioned)
-	if err != nil {
-		return true, err
-	}
-
-	// Create a temporary Driver and attempt to add the Template to it. This
-	// ensures the Rego code both parses and compiles.
-	d, err := local.New()
-	if err != nil {
-		return false, fmt.Errorf("unable to create Driver: %w", err)
-	}
-
-	err = d.AddTemplate(ctx, unversioned)
-	if err != nil {
-		return true, err
-	}
-
+	// TODO should this go away? The idea of using a driver outside of the CF to do validation violates separation-of-concerns
+	// since this necessarily copies CF logic.
 	return false, nil
 }
 

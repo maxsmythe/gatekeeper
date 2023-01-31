@@ -615,7 +615,7 @@ github.com/google/btree v1.0.0/go.mod h1:lNA+9X1NB3Zf8V7Ke586lFgjr2dZNuvo3lPJSGZ
 github.com/google/btree v1.0.1/go.mod h1:xXMiIv4Fb/0kKde4SpL7qlzvu5cMJDRkFDxJfI9uaxA=
 github.com/google/cel-go v0.12.6 h1:kjeKudqV0OygrAqA9fX6J55S8gj+Jre2tckIm5RoG4M=
 github.com/google/cel-go v0.12.6/go.mod h1:Jk7ljRzLBhkmiAwBoUxB1sZSCVBAzkqPF25olK/iRDw=
-github.com/google/flatbuffers v2.0.6+incompatible h1:XHFReMv7nFFusa+CEokzWbzaYocKXI6C7hdU5Kgh9Lw=
+github.com/google/flatbuffers v1.12.1 h1:MVlul7pQNoDzWRLTw5imwYsl+usrS1TXG2H4jg6ImGw=
 github.com/google/gnostic v0.5.7-v3refs h1:FhTMOKj2VhjpouxvWJAV1TL304uMlb9zcDqkl6cEI54=
 github.com/google/gnostic v0.5.7-v3refs/go.mod h1:73MKFl6jIHelAJNaBGFzt3SPtZULs9dYrGFt8OiIsHQ=
 github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
@@ -938,8 +938,6 @@ github.com/onsi/gomega v1.24.2 h1:J/tulyYK6JwBldPViHJReihxxZ+22FHs0piGjQAvoUE=
 github.com/onsi/gomega v1.24.2/go.mod h1:gs3J10IS7Z7r7eXRoNJIrNqU4ToQukCJhFtKrWgHWnk=
 github.com/open-policy-agent/cert-controller v0.4.0 h1:AQntgNq7fsoHgnoKrOk0lpRyab1na09vibeJCX4YBCs=
 github.com/open-policy-agent/cert-controller v0.4.0/go.mod h1:uOQW+2tMU51vSxy1Yt162oVUTMdqLuotC0aObQxrh6k=
-github.com/open-policy-agent/frameworks/constraint v0.0.0-20221214024800-b745745c4118 h1:2i9k9I69KX48JTWxp+u4kfMRNgoP50A6uPPqo93uhow=
-github.com/open-policy-agent/frameworks/constraint v0.0.0-20221214024800-b745745c4118/go.mod h1:sN/YfAskVfaDy234+bETlOymFLDoLdJZvMdACwenxc8=
 github.com/open-policy-agent/opa v0.47.2 h1:9QmIumL6MRPYoXboBDSU/c1fG2PN5J4lo800RK36jrc=
 github.com/open-policy-agent/opa v0.47.2/go.mod h1:I5DbT677OGqfk9gvu5i54oIt0rrVf4B5pedpqDquAXo=
 github.com/opencontainers/go-digest v0.0.0-20170106003457-a6d0ee40d420/go.mod h1:cMLVZDEM3+U2I4VmLI6N8jQYUd2OVphdqWwCJHrFt2s=

@@ -30,6 +30,12 @@ type templateClient struct {
 	// this Template. This is used to validate incoming Constraints before adding
 	// them.
 	crd *apiextensions.CustomResourceDefinition
+
+	// if, for some reason, there was an error adding a pre-cached constraint after
+	// a driver switch, AddTemplate returns an error. We should preserve that state
+	// so that we know a constraint replay should be attempted the next time AddTemplate
+	// is called.
+	needsConstraintReplay bool
 }
 
 func (e *templateClient) ValidateConstraint(constraint *unstructured.Unstructured) error {

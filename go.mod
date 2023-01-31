@@ -2,6 +2,9 @@ module github.com/open-policy-agent/gatekeeper
 
 go 1.18
 
+// Use local copy of frameworks library
+replace github.com/open-policy-agent/frameworks/constraint => ../frameworks/constraint
+
 require (
 	cloud.google.com/go/trace v1.2.0
 	contrib.go.opencensus.io/exporter/ocagent v0.7.0
@@ -33,6 +36,7 @@ require (
 	k8s.io/api v0.26.1
 	k8s.io/apiextensions-apiserver v0.26.1
 	k8s.io/apimachinery v0.26.1
+	k8s.io/apiserver v0.26.1
 	k8s.io/client-go v0.26.1
 	k8s.io/klog/v2 v2.80.1
 	k8s.io/utils v0.0.0-20221128185143-99ec85e7a448
@@ -138,7 +142,6 @@ require (
 	google.golang.org/grpc v1.51.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/apiserver v0.26.1 // indirect
 	k8s.io/component-base v0.26.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.35 // indirect

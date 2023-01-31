@@ -54,7 +54,8 @@ func validateTargetNames(ts []handler.TargetHandler) []string {
 // Driver defines the Rego execution environment.
 func Driver(d drivers.Driver) Opt {
 	return func(client *Client) error {
-		client.driver = d
+		client.drivers[d.Name()] = d
+		client.driverPriority[d.Name()] = len(client.drivers)
 		return nil
 	}
 }
