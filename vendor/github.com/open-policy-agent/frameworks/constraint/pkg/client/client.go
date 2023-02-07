@@ -70,7 +70,7 @@ func (c *Client) driverForTemplate(template *templates.ConstraintTemplate) strin
 		if !ok {
 			continue
 		}
-		if priority < c.driverPriority[language] {
+		if priority < c.driverPriority[language] || c.driverPriority[language] == 0 {
 			language = v.Engine
 		}
 	}
@@ -190,7 +190,7 @@ func (c *Client) AddTemplate(ctx context.Context, templ *templates.ConstraintTem
 
 	driver, ok := c.drivers[c.driverForTemplate(templ)]
 	if !ok {
-		return resp, clienterrors.ErrNoDriver
+		return resp, fmt.Errorf("%w: available drivers: %v, wanted %v", clienterrors.ErrNoDriver, c.driverPriority, c.driverForTemplate(templ))
 	}
 
 	// TODO because different targets may have different code sets,
@@ -680,8 +680,25 @@ func (c *Client) review(ctx context.Context, target string, constraints []*unstr
 	var results []*types.Result
 	var tracesBuilder strings.Builder
 
+	driverToConstraints := map[string][]*unstructured.Unstructured{}
+
+	for _, constraint := range constraints {
+		template, ok := c.templates[strings.ToLower(constraint.GetObjectKind().GroupVersionKind().Kind)]
+		if !ok {
+			return nil, fmt.Errorf("%w: while loading driver for constraint %s", ErrMissingConstraintTemplate, constraint.GetName())
+		}
+		driver := c.driverForTemplate(template.template)
+		if driver == "" {
+			return nil, fmt.Errorf("%w: while loading driver for constraint %s", clienterrors.ErrNoDriver, constraint.GetName())
+		}
+		driverToConstraints[driver] = append(driverToConstraints[driver], constraint)
+	}
+
 	for driverName, driver := range c.drivers {
-		driverResults, trace, err := driver.Query(ctx, target, constraints, review, opts...)
+		if len(driverToConstraints[driverName]) == 0 {
+			continue
+		}
+		driverResults, trace, err := driver.Query(ctx, target, driverToConstraints[driverName], review, opts...)
 		if err != nil {
 			return nil, err
 		}

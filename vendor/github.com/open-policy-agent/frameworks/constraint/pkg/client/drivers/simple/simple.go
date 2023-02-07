@@ -3,6 +3,7 @@ package simple
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 
 	apiconstraints "github.com/open-policy-agent/frameworks/constraint/pkg/apis/constraints"
@@ -14,15 +15,14 @@ import (
 )
 
 const (
-	libRoot   = "data.lib"
-	violation = "violation"
-
 	// Name is the name of the driver
 	Name = "Simple"
 )
 
 func New() *Driver {
-	return &Driver{}
+	return &Driver{
+		code: make(map[string]string),
+	}
 }
 
 var _ drivers.Driver = &Driver{}
@@ -117,7 +117,7 @@ func (d *Driver) Query(ctx context.Context, target string, constraints []*unstru
 	for i := range constraints {
 		constraint := constraints[i]
 		result := &types.Result{
-			Msg:        d.code[constraint.GetObjectKind().GroupVersionKind().Kind],
+			Msg:        d.code[strings.ToLower(constraint.GetObjectKind().GroupVersionKind().Kind)],
 			Constraint: constraint,
 			// TODO: the engine should not determine the enforcement action -- that does not work with CEL KEP
 			EnforcementAction: apiconstraints.EnforcementActionDeny,
