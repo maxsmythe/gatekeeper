@@ -101,7 +101,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	return c.Watch(
-		&source.Kind{Type: &v1alpha1.ExpansionTemplate{}},
+		source.Kind(mgr.GetCache(), &v1alpha1.ExpansionTemplate{}),
 		&handler.EnqueueRequestForObject{})
 }
 

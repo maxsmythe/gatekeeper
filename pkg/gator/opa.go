@@ -2,17 +2,21 @@ package gator
 
 import (
 	constraintclient "github.com/open-policy-agent/frameworks/constraint/pkg/client"
+	"github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers/k8scel"
 	"github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers/rego"
 	"github.com/open-policy-agent/gatekeeper/pkg/target"
 )
 
 func NewOPAClient(includeTrace bool) (Client, error) {
+	// initialize K8sValidation
+	k8sDriver := k8scel.New()
+
 	driver, err := rego.New(rego.Tracing(includeTrace))
 	if err != nil {
 		return nil, err
 	}
 
-	c, err := constraintclient.NewClient(constraintclient.Targets(&target.K8sValidationTarget{}), constraintclient.Driver(driver))
+	c, err := constraintclient.NewClient(constraintclient.Targets(&target.K8sValidationTarget{}), constraintclient.Driver(k8sDriver), constraintclient.Driver(driver))
 	if err != nil {
 		return nil, err
 	}

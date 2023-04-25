@@ -7,6 +7,7 @@ import (
 	"github.com/open-policy-agent/frameworks/constraint/pkg/apis"
 	templatesv1 "github.com/open-policy-agent/frameworks/constraint/pkg/apis/templates/v1"
 	constraintclient "github.com/open-policy-agent/frameworks/constraint/pkg/client"
+	"github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers/k8scel"
 	"github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers/rego"
 	"github.com/open-policy-agent/gatekeeper/pkg/expansion"
 	"github.com/open-policy-agent/gatekeeper/pkg/gator/expand"
@@ -30,12 +31,15 @@ func init() {
 func Test(objs []*unstructured.Unstructured, includeTrace bool) (*GatorResponses, error) {
 	// create the client
 
+	// initialize K8sValidation
+	k8sDriver := k8scel.New()
+
 	driver, err := rego.New(rego.Tracing(includeTrace))
 	if err != nil {
 		return nil, err
 	}
 
-	client, err := constraintclient.NewClient(constraintclient.Targets(&target.K8sValidationTarget{}), constraintclient.Driver(driver))
+	client, err := constraintclient.NewClient(constraintclient.Targets(&target.K8sValidationTarget{}), constraintclient.Driver(k8sDriver), constraintclient.Driver(driver))
 	if err != nil {
 		return nil, fmt.Errorf("creating OPA client: %w", err)
 	}

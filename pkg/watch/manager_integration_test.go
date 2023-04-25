@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -30,7 +31,6 @@ import (
 	"github.com/open-policy-agent/gatekeeper/pkg/watch"
 	testclient "github.com/open-policy-agent/gatekeeper/test/clients"
 	"github.com/open-policy-agent/gatekeeper/test/testutils"
-	"github.com/open-policy-agent/gatekeeper/third_party/sigs.k8s.io/controller-runtime/pkg/dynamiccache"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
@@ -62,9 +62,8 @@ func setupManager(t *testing.T) (manager.Manager, *watch.Manager) {
 	metrics.Registry = prometheus.NewRegistry()
 	mgr, err := manager.New(cfg, manager.Options{
 		MetricsBindAddress: "0",
-		NewCache:           dynamiccache.New,
-		MapperProvider: func(c *rest.Config) (meta.RESTMapper, error) {
-			return apiutil.NewDynamicRESTMapper(c)
+		MapperProvider: func(c *rest.Config, cli *http.Client) (meta.RESTMapper, error) {
+			return apiutil.NewDynamicRESTMapper(c, cli)
 		},
 		Logger: testutils.NewLogger(t),
 	})
@@ -197,7 +196,7 @@ func Test_ReconcileErrorDoesNotBlockController(t *testing.T) {
 	// Setup another watch. Show that both the error resource (in a backoff-requeue loop)
 	// and other resources can reconcile in an interleaving fashion.
 	err = c.Watch(
-		&source.Kind{Type: &corev1.Namespace{}},
+		source.Kind(mgr.GetCache(), &corev1.Namespace{}),
 		&handler.EnqueueRequestForObject{},
 	)
 	if err != nil {

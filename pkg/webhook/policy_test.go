@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8schema "k8s.io/apimachinery/pkg/runtime/schema"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -279,6 +280,14 @@ type nsGetter struct {
 	testclients.NoopClient
 }
 
+func (f *nsGetter) IsObjectNamespaced(obj runtime.Object) (bool, error) {
+	return false, nil
+}
+
+func (f *nsGetter) GroupVersionKindFor(obj runtime.Object) (schema.GroupVersionKind, error) {
+	return schema.GroupVersionKind{}, nil
+}
+
 func (f *nsGetter) SubResource(_ string) ctrlclient.SubResourceClient {
 	return nil
 }
@@ -296,6 +305,14 @@ func (f *nsGetter) Get(_ context.Context, key ctrlclient.ObjectKey, obj ctrlclie
 
 type errorNSGetter struct {
 	testclients.NoopClient
+}
+
+func (f *errorNSGetter) IsObjectNamespaced(obj runtime.Object) (bool, error) {
+	return false, nil
+}
+
+func (f *errorNSGetter) GroupVersionKindFor(obj runtime.Object) (schema.GroupVersionKind, error) {
+	return schema.GroupVersionKind{}, nil
 }
 
 func (f *errorNSGetter) SubResource(_ string) ctrlclient.SubResourceClient {

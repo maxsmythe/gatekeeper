@@ -62,7 +62,7 @@ type AddFunction func(manager.Manager) error
 // It supports non-blocking calls to get informers, as well as the
 // ability to remove an informer dynamically.
 type RemovableCache interface {
-	GetInformerNonBlocking(obj client.Object) (cache.Informer, error)
+	GetInformerNonBlocking(ctx context.Context, obj client.Object) (cache.Informer, error)
 	List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error
 	Remove(obj client.Object) error
 }
@@ -177,7 +177,8 @@ func (wm *Manager) doAddWatch(r *Registrar, gvk schema.GroupVersionKind) error {
 	default:
 		u := &unstructured.Unstructured{}
 		u.SetGroupVersionKind(gvk)
-		informer, err := wm.cache.GetInformerNonBlocking(u)
+		// TODO pipe in context
+		informer, err := wm.cache.GetInformerNonBlocking(context.Background(), u)
 		if err != nil || informer == nil {
 			// This is expected to fail if a CRD is unregistered.
 			return fmt.Errorf("getting informer for kind: %+v %w", gvk, err)
@@ -288,7 +289,7 @@ func (wm *Manager) replaceWatches(r *Registrar) error {
 }
 
 // OnAdd implements cache.ResourceEventHandler. Called by informers.
-func (wm *Manager) OnAdd(obj interface{}) {
+func (wm *Manager) OnAdd(obj interface{}, _ bool) {
 	// Send event to eventLoop() for processing
 	select {
 	case wm.events <- obj:

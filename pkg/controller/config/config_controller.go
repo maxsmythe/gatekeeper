@@ -159,7 +159,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to Config
-	err = c.Watch(&source.Kind{Type: &configv1alpha1.Config{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(source.Kind(mgr.GetCache(), &configv1alpha1.Config{}), &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}

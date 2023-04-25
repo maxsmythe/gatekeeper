@@ -85,7 +85,7 @@ type fakeRemovableCache struct {
 	removeCounter int
 }
 
-func (f *fakeRemovableCache) GetInformerNonBlocking(obj client.Object) (cache.Informer, error) {
+func (f *fakeRemovableCache) GetInformerNonBlocking(_ context.Context, obj client.Object) (cache.Informer, error) {
 	return f.informer, nil
 }
 
@@ -114,12 +114,12 @@ func (f *fakeRemovableCache) removeCount() int {
 
 type funcCache struct {
 	ListFunc                   func(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error
-	GetInformerNonBlockingFunc func(obj client.Object) (cache.Informer, error)
+	GetInformerNonBlockingFunc func(ctx context.Context, obj client.Object) (cache.Informer, error)
 }
 
-func (f *funcCache) GetInformerNonBlocking(obj client.Object) (cache.Informer, error) {
+func (f *funcCache) GetInformerNonBlocking(ctx context.Context, obj client.Object) (cache.Informer, error) {
 	if f.GetInformerNonBlockingFunc != nil {
-		return f.GetInformerNonBlockingFunc(obj)
+		return f.GetInformerNonBlockingFunc(ctx, obj)
 	}
 	return &fakeCacheInformer{}, nil
 }
@@ -397,7 +397,7 @@ func TestRegistrar_Replay_Retry(t *testing.T) {
 			}
 			return nil
 		},
-		GetInformerNonBlockingFunc: func(obj client.Object) (cache.Informer, error) {
+		GetInformerNonBlockingFunc: func(_ context.Context, obj client.Object) (cache.Informer, error) {
 			return informer, nil
 		},
 	}
@@ -593,7 +593,7 @@ func TestRegistrar_ReplaceWatch(t *testing.T) {
 			listCalls[gvk]++
 			return nil
 		},
-		GetInformerNonBlockingFunc: func(obj client.Object) (cache.Informer, error) {
+		GetInformerNonBlockingFunc: func(_ context.Context, obj client.Object) (cache.Informer, error) {
 			mu.Lock()
 			defer mu.Unlock()
 			gvk := obj.GetObjectKind().GroupVersionKind()

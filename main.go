@@ -30,6 +30,7 @@ import (
 	"github.com/go-logr/zapr"
 	"github.com/open-policy-agent/cert-controller/pkg/rotator"
 	constraintclient "github.com/open-policy-agent/frameworks/constraint/pkg/client"
+	"github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers/k8scel"
 	"github.com/open-policy-agent/frameworks/constraint/pkg/client/drivers/rego"
 	frameworksexternaldata "github.com/open-policy-agent/frameworks/constraint/pkg/externaldata"
 	api "github.com/open-policy-agent/gatekeeper/apis"
@@ -53,7 +54,6 @@ import (
 	"github.com/open-policy-agent/gatekeeper/pkg/version"
 	"github.com/open-policy-agent/gatekeeper/pkg/watch"
 	"github.com/open-policy-agent/gatekeeper/pkg/webhook"
-	"github.com/open-policy-agent/gatekeeper/third_party/sigs.k8s.io/controller-runtime/pkg/dynamiccache"
 	_ "go.uber.org/automaxprocs" // set GOMAXPROCS to the number of container cores, if known.
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -209,7 +209,6 @@ func innerMain() int {
 	metrics.DisableRESTClientMetrics()
 
 	mgr, err := ctrl.NewManager(config, ctrl.Options{
-		NewCache:               dynamiccache.New,
 		Scheme:                 scheme,
 		MetricsBindAddress:     *metricsAddr,
 		LeaderElection:         false,
@@ -217,8 +216,8 @@ func innerMain() int {
 		Host:                   *host,
 		CertDir:                *certDir,
 		HealthProbeBindAddress: *healthAddr,
-		MapperProvider: func(c *rest.Config) (meta.RESTMapper, error) {
-			return apiutil.NewDynamicRESTMapper(c)
+		MapperProvider: func(c *rest.Config, cli *http.Client) (meta.RESTMapper, error) {
+			return apiutil.NewDynamicRESTMapper(c, cli)
 		},
 	})
 	if err != nil {
@@ -366,6 +365,10 @@ func setupControllers(mgr ctrl.Manager, sw *watch.ControllerSwitch, tracker *rea
 		// register the client cert watcher to the mutation system
 		mutationOpts.ClientCertWatcher = certWatcher
 	}
+
+	// initialize K8sValidation
+	k8sDriver := k8scel.New()
+
 	// initialize OPA
 	driver, err := rego.New(args...)
 	if err != nil {
@@ -373,7 +376,7 @@ func setupControllers(mgr ctrl.Manager, sw *watch.ControllerSwitch, tracker *rea
 		return err
 	}
 
-	client, err := constraintclient.NewClient(constraintclient.Targets(&target.K8sValidationTarget{}), constraintclient.Driver(driver))
+	client, err := constraintclient.NewClient(constraintclient.Targets(&target.K8sValidationTarget{}), constraintclient.Driver(k8sDriver), constraintclient.Driver(driver))
 	if err != nil {
 		setupLog.Error(err, "unable to set up OPA client")
 		return err
